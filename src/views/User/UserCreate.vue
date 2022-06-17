@@ -67,7 +67,7 @@
                         <div class="col-md">
                             <div class="form-group">
                                 <label>Description <sup class="text-danger">Optional</sup></label>
-                                <QuillEditor theme="snow"/>
+                                <QuillEditor theme="snow" toolbar="full"/>
                             </div>
                         </div>
                     </div>

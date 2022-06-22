@@ -7,7 +7,7 @@
             </strong>
         </div>
         <div class="col-md text-right">
-            <button v-on:click="createUser()" class="btn btn-icon btn-primary mr-1" id="btn-save">
+            <button v-on:click="editUser()" class="btn btn-icon btn-primary mr-1" id="btn-save">
                 <i class="fas fa-fw fa-save"></i>
             </button>
             <router-link :to="{name: 'user.index'}" class="btn btn-icon btn-primary" id="btn-list">
@@ -56,6 +56,7 @@ import { onMounted } from '@vue/runtime-core';
 /* My Package */
 import { showToolTip, showAlert } from './../../constant/function.js';
 import { API_URL } from './../../constant/variable.js';
+import { useRoute } from 'vue-router';
 
 export default {
     setup() {
@@ -66,37 +67,59 @@ export default {
             password: null,
             avatar: 'default.png'
         });
+        const router = useRoute();
 
         onMounted(() => {
             tooltipInitiation();
+            showAlert('loading', 'Data is loading, please wait...')
+            .then(res => {
+                alert.value = res;
+            })
+            .finally(() => {
+                getUser();
+            });
         });
 
-        async function createUser() {
+        async function getUser() {
+            let id = router.params.id;
+            await axios.get(`${API_URL}/users/show/${id}`)
+            .then(res => {
+                user.username = res.data.username;
+                user.email = res.data.email;
+            })
+            .finally(() => {
+                showAlert('success', 'Data loaded successfully.')
+                .then(res => {
+                    alert.value = res;
+                })
+            });
+        }
+
+        async function editUser() {
             showAlert('loading', 'Data is saving, please wait...')
             .then(res => {
                 alert.value = res;
             })
             .finally(() => {
-                storeUser();
+                updateUser();
             });
         }
 
-        async function storeUser() {
+        async function updateUser() {
+            let id = router.params.id;
             let data = {
                 username: user.username,
                 email: user.email,
                 password: user.password,
                 avatar: user.avatar
             }
-            await axios.postForm(`${API_URL}/users/create`, data)
+            await axios.postForm(`${API_URL}/users/update/${id}`, data)
             .then(() => {
-                showAlert('success', 'Data saved successfully')
+                showAlert('success', 'Data updated successfully')
                 .then(res => {
                     alert.value = res;
                 })
                 .finally(() => {
-                    user.username = null,
-                    user.email = null,
                     user.password = null
                 });
             })
@@ -118,7 +141,7 @@ export default {
         return {
             user,
             alert,
-            createUser
+            editUser
         }
     }
 }

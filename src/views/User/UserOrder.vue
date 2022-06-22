@@ -6,9 +6,9 @@
                 {{ alert.message }}
             </strong>
         </div>
-        <div v-if="first_opened == false" class="col text-right">
-            <router-link :to="{name: 'user.create'}" class="btn btn-icon btn-primary" id="btn-create">
-                <i class="fas fa-plus fa-fw"></i>
+        <div class="col-md text-right">
+            <router-link :to="{name: 'user.index'}" class="btn btn-icon btn-primary" id="btn-list">
+                <i class="fas fa-list fa-fw"></i>
             </router-link>
         </div>
     </div>
@@ -20,29 +20,30 @@
                         <thead>
                             <tr>
                                 <th class="text-center">ID</th>
-                                <th class="text-center">Name</th>
-                                <th class="text-center">Email</th>
+                                <th class="text-center">User</th>
+                                <th class="text-center">Product</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-center">Total</th>
+                                <th class="text-center">Status</th>
                                 <th class="text-center">Created At</th>
-                                <th class="text-center">Updated At</th>
                                 <th class="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="item in users" :key="item.id">
+                            <tr v-for="item in orders" :key="item.id">
                                 <td>{{ item.id }}</td>
-                                <td>{{ item.username }}</td>
-                                <td>{{ item.email }}</td>
+                                <td>{{ item.user_name }}</td>
+                                <td>{{ item.product_name }}</td>
+                                <td>{{ item.qty }}</td>
+                                <td>{{ moneyFormat(item.total) }}</td>
+                                <td>{{ item.status_name }}</td>
                                 <td class="text-center">{{ dateTime(item.created_at.date) }}</td>
-                                <td class="text-center">{{ dateTime(item.updated_at.date) }}</td>
                                 <td class="text-center">
-                                    <a v-on:click="confirmDelete($event, item.id)" href="#">
+                                    <a v-on:click="confirmDelete($event, item.id)" href="#" class="mr-1">
                                         <i class="text-danger cursor-pointer fas fa-trash"></i>
                                     </a>
-                                    <router-link :to="{name: 'user.edit', params: {id: item.id}}" class="mx-1">
+                                    <router-link :to="{name: 'order.edit', params: {id: item.id}}">
                                         <i class="text-info fas fa-pen"></i>
-                                    </router-link>
-                                    <router-link :to="{name: 'user.order', params: {id: item.id}}" class="mx-1">
-                                        <i class="text-warning fas fa-clipboard"></i>
                                     </router-link>
                                 </td>
                             </tr>
@@ -57,71 +58,67 @@
 <script>
 /* Vue */
 import { onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 /* Public Depedencis */
 import $ from 'jquery';
 import axios from 'axios';
 import JSAlert from 'js-alert';
 import moment from 'moment';
-// import jsZip from 'jszip';
-// import pdfMake from 'pdfmake/build/pdfmake.min.js';
-// import pdfFonts from "pdfmake/build/vfs_fonts.js";
 import 'datatables.net/js/jquery.dataTables.min.js';
 import 'datatables.net-responsive/js/dataTables.responsive.min.js';
 import 'datatables.net-dt/css/jquery.dataTables.min.css';
 import 'datatables.net-responsive-dt/css/responsive.dataTables.min.css';
-// import 'datatables.net-buttons/js/dataTables.buttons.js';
-// import 'datatables.net-buttons/js/buttons.print.min.js';
-// import 'datatables.net-buttons/js/buttons.html5.min.js';
-// import 'datatables.net-buttons/js/buttons.flash.min.js';
-// import 'datatables.net-buttons-dt/css/buttons.dataTables.min.css';
 
 /* My Package */
-import { showToolTip, showAlert } from './../../constant/function.js';
+import { showToolTip, showAlert, moneyFormat } from './../../constant/function.js';
 import { API_URL } from './../../constant/variable.js';
 
 export default {
     setup() {
-        let users = ref([]);
+        let orders = ref([]);
         let alert = ref({});
         let first_opened = ref(true);
+
+        const router = useRoute();
         
         onMounted(() => {
-            listUser();
+            listOrder();
         });
 
-        async function getUser() {
-            let response = await axios.get(`${API_URL}/users`);
-            return response.data
+        async function getOrder() {
+            let id = router.params.id;
+            let response = await axios.get(`${API_URL}/users/${id}/orders`);
+            return response.data;
         }
 
-        async function deleteUser(element, id) {
-            await axios.postForm(`${API_URL}/users/delete/${id}`)
+        async function deleteOrder(element, id) {
+            await axios.postForm(`${API_URL}/orders/delete/${id}/`)
             .then(() => {
-                users.value = users.value.filter(user => user.id != id);
+                orders.value = orders.value.filter(order => order.id != id);
                 let table = $('table').DataTable();
                 let removing_row = $(element).parent().parent().parent().closest('tr');
                 table.row(removing_row).remove().draw();
             })
             .catch(err => {
-                showAlert('error', err.message.toString())
+                showAlert('success', err.message.toString())
                 .then(res => {
                     alert.value = res;
-                });
+                })
             })
             .finally(() => {
                 return true;
             });
         }
 
-        async function listUser() {
+        async function listOrder() {
             showAlert('loading', 'Data is loading, please wait...')
             .then(res => {
                 alert.value = res;
             });
 
-            getUser().then((res) => {
-                users.value = res;
+            getOrder().then((res) => {
+                orders.value = res;
             })
             .finally(() => {
                 showAlert('success', 'Data loaded successfully.')
@@ -145,7 +142,7 @@ export default {
                         alert.value = res;
                     })
                     .finally(() => {
-                        deleteUser(event.target, id)
+                        deleteOrder(event.target, id)
                         .then(() => {
                             showAlert('success', 'Data deleted successfully.')
                             .then(res => {
@@ -159,41 +156,11 @@ export default {
 
         async function tableInitiation () {
             $('table').DataTable();
-            // window.JSZip = jsZip;
-            // pdfMake.vfs = pdfFonts.pdfMake.vfs;
-            // let options = {
-            //     columns: [0, 1, 2, 3]
-            // }
-            // $('table').DataTable({
-            //     dom: 'Bfrtip',
-            //     buttons: [
-            //         {
-            //             extend: 'copy',
-            //             exportOptions: options
-            //         },
-            //         {
-            //             extend: 'csv',
-            //             exportOptions: options
-            //         },
-            //         {
-            //             extend: 'excel',
-            //             exportOptions: options
-            //         },
-            //         {
-            //             extend: 'pdf',
-            //             exportOptions: options
-            //         },
-            //         {
-            //             extend: 'print',
-            //             exportOptions: options
-            //         },
-            //     ]
-            // });
         }
 
         async function tooltipInitiation() {
-            let btn_create = document.getElementById('btn-create');
-            showToolTip(btn_create, 'Add New User');
+            let btn_list = document.getElementById('btn-list');
+            showToolTip(btn_list, 'User List');
         }
 
         function dateTime(value) {
@@ -201,11 +168,12 @@ export default {
         }
 
         return {
-            users,
+            orders,
             alert,
             first_opened,
             confirmDelete,
-            dateTime
+            dateTime,
+            moneyFormat
         }
     }
 }

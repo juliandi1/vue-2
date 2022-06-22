@@ -7,7 +7,7 @@
             </strong>
         </div>
         <div v-if="first_opened == false" class="col text-right">
-            <router-link :to="{name: 'user.create'}" class="btn btn-icon btn-primary" id="btn-create">
+            <router-link :to="{name: 'status.create'}" class="btn btn-icon btn-primary" id="btn-create">
                 <i class="fas fa-plus fa-fw"></i>
             </router-link>
         </div>
@@ -21,28 +21,23 @@
                             <tr>
                                 <th class="text-center">ID</th>
                                 <th class="text-center">Name</th>
-                                <th class="text-center">Email</th>
                                 <th class="text-center">Created At</th>
                                 <th class="text-center">Updated At</th>
                                 <th class="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="item in users" :key="item.id">
+                            <tr v-for="item in statuses" :key="item.id">
                                 <td>{{ item.id }}</td>
-                                <td>{{ item.username }}</td>
-                                <td>{{ item.email }}</td>
+                                <td>{{ item.name }}</td>
                                 <td class="text-center">{{ dateTime(item.created_at.date) }}</td>
                                 <td class="text-center">{{ dateTime(item.updated_at.date) }}</td>
                                 <td class="text-center">
-                                    <a v-on:click="confirmDelete($event, item.id)" href="#">
+                                    <a v-on:click="confirmDelete($event, item.id)" href="#" class="mr-1">
                                         <i class="text-danger cursor-pointer fas fa-trash"></i>
                                     </a>
-                                    <router-link :to="{name: 'user.edit', params: {id: item.id}}" class="mx-1">
+                                    <router-link :to="{name: 'status.edit', params: {id: item.id}}">
                                         <i class="text-info fas fa-pen"></i>
-                                    </router-link>
-                                    <router-link :to="{name: 'user.order', params: {id: item.id}}" class="mx-1">
-                                        <i class="text-warning fas fa-clipboard"></i>
                                     </router-link>
                                 </td>
                             </tr>
@@ -82,46 +77,46 @@ import { API_URL } from './../../constant/variable.js';
 
 export default {
     setup() {
-        let users = ref([]);
+        let statuses = ref([]);
         let alert = ref({});
         let first_opened = ref(true);
         
         onMounted(() => {
-            listUser();
+            listStatus();
         });
 
-        async function getUser() {
-            let response = await axios.get(`${API_URL}/users`);
+        async function getStatus() {
+            let response = await axios.get(`${API_URL}/statuses`);
             return response.data
         }
 
-        async function deleteUser(element, id) {
-            await axios.postForm(`${API_URL}/users/delete/${id}`)
+        async function deleteStatus(element, id) {
+            await axios.postForm(`${API_URL}/statuses/delete/${id}`)
             .then(() => {
-                users.value = users.value.filter(user => user.id != id);
+                statuses.value = statuses.value.filter(status => status.id != id);
                 let table = $('table').DataTable();
                 let removing_row = $(element).parent().parent().parent().closest('tr');
                 table.row(removing_row).remove().draw();
             })
             .catch(err => {
-                showAlert('error', err.message.toString())
+                showAlert('success', err.message.toString())
                 .then(res => {
                     alert.value = res;
-                });
+                })
             })
             .finally(() => {
                 return true;
             });
         }
 
-        async function listUser() {
+        async function listStatus() {
             showAlert('loading', 'Data is loading, please wait...')
             .then(res => {
                 alert.value = res;
             });
 
-            getUser().then((res) => {
-                users.value = res;
+            getStatus().then((res) => {
+                statuses.value = res;
             })
             .finally(() => {
                 showAlert('success', 'Data loaded successfully.')
@@ -145,7 +140,7 @@ export default {
                         alert.value = res;
                     })
                     .finally(() => {
-                        deleteUser(event.target, id)
+                        deleteStatus(event.target, id)
                         .then(() => {
                             showAlert('success', 'Data deleted successfully.')
                             .then(res => {
@@ -159,41 +154,11 @@ export default {
 
         async function tableInitiation () {
             $('table').DataTable();
-            // window.JSZip = jsZip;
-            // pdfMake.vfs = pdfFonts.pdfMake.vfs;
-            // let options = {
-            //     columns: [0, 1, 2, 3]
-            // }
-            // $('table').DataTable({
-            //     dom: 'Bfrtip',
-            //     buttons: [
-            //         {
-            //             extend: 'copy',
-            //             exportOptions: options
-            //         },
-            //         {
-            //             extend: 'csv',
-            //             exportOptions: options
-            //         },
-            //         {
-            //             extend: 'excel',
-            //             exportOptions: options
-            //         },
-            //         {
-            //             extend: 'pdf',
-            //             exportOptions: options
-            //         },
-            //         {
-            //             extend: 'print',
-            //             exportOptions: options
-            //         },
-            //     ]
-            // });
         }
 
         async function tooltipInitiation() {
             let btn_create = document.getElementById('btn-create');
-            showToolTip(btn_create, 'Add New User');
+            showToolTip(btn_create, 'Add New Status');
         }
 
         function dateTime(value) {
@@ -201,7 +166,7 @@ export default {
         }
 
         return {
-            users,
+            statuses,
             alert,
             first_opened,
             confirmDelete,

@@ -7,10 +7,10 @@
             </strong>
         </div>
         <div class="col-md text-right">
-            <button v-on:click="createUser()" class="btn btn-icon btn-primary mr-1" id="btn-save">
+            <button v-on:click="editStatus()" class="btn btn-icon btn-primary mr-1" id="btn-save">
                 <i class="fas fa-fw fa-save"></i>
             </button>
-            <router-link :to="{name: 'user.index'}" class="btn btn-icon btn-primary" id="btn-list">
+            <router-link :to="{name: 'status.index'}" class="btn btn-icon btn-primary" id="btn-list">
                 <i class="fas fa-list fa-fw"></i>
             </router-link>
         </div>
@@ -22,20 +22,8 @@
                     <div class="row">
                         <div class="col-md">
                             <div class="form-group">
-                                <label>Username</label>
-                                <input type="text" class="form-control" v-model="user.username">
-                            </div>
-                        </div>
-                        <div class="col-md">
-                            <div class="form-group">
-                                <label>Email</label>
-                                <input type="text" class="form-control" v-model="user.email">
-                            </div>
-                        </div>
-                        <div class="col-md">
-                            <div class="form-group">
-                                <label>Password</label>
-                                <input type="password" class="form-control" v-model="user.password">
+                                <label>Name</label>
+                                <input type="text" class="form-control" v-model="status.name">
                             </div>
                         </div>
                     </div>
@@ -47,57 +35,69 @@
 
 <script>
 /* VueJS */
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 
 /* Public Depedencis */
 import axios from 'axios';
 
-import { onMounted } from '@vue/runtime-core';
 /* My Package */
 import { showToolTip, showAlert } from './../../constant/function.js';
 import { API_URL } from './../../constant/variable.js';
+import { useRoute } from 'vue-router';
 
 export default {
     setup() {
         let alert = ref({});
-        const user = reactive({
-            username: null,
-            email: null,
-            password: null,
-            avatar: 'default.png'
+        const status = reactive({
+            name: null
         });
+        const router = useRoute();
 
         onMounted(() => {
             tooltipInitiation();
+            showAlert('loading', 'Data is loading, please wait...')
+            .then(res => {
+                alert.value = res;
+            })
+            .finally(() => {
+                getStatus();
+            });
         });
 
-        async function createUser() {
+        async function getStatus() {
+            let id = router.params.id;
+            await axios.get(`${API_URL}/statuses/show/${id}`)
+            .then(res => {
+                status.name = res.data.name;
+            })
+            .finally(() => {
+                showAlert('success', 'Data loaded successfully.')
+                .then(res => {
+                    alert.value = res;
+                })
+            });
+        }
+
+        async function editStatus() {
             showAlert('loading', 'Data is saving, please wait...')
             .then(res => {
                 alert.value = res;
             })
             .finally(() => {
-                storeUser();
+                updateStatus();
             });
         }
 
-        async function storeUser() {
+        async function updateStatus() {
+            let id = router.params.id;
             let data = {
-                username: user.username,
-                email: user.email,
-                password: user.password,
-                avatar: user.avatar
+                name: status.name
             }
-            await axios.postForm(`${API_URL}/users/create`, data)
+            await axios.postForm(`${API_URL}/statuses/update/${id}`, data)
             .then(() => {
-                showAlert('success', 'Data saved successfully')
+                showAlert('success', 'Data updated successfully')
                 .then(res => {
                     alert.value = res;
-                })
-                .finally(() => {
-                    user.username = null,
-                    user.email = null,
-                    user.password = null
                 });
             })
             .catch(err => {
@@ -111,14 +111,14 @@ export default {
         async function tooltipInitiation() {
             let btn_save = document.getElementById('btn-save');
             let btn_list = document.getElementById('btn-list');
-            showToolTip(btn_list, 'User List');
-            showToolTip(btn_save, 'Save User');
+            showToolTip(btn_list, 'Status List');
+            showToolTip(btn_save, 'Save Status');
         }
 
         return {
-            user,
+            status,
             alert,
-            createUser
+            editStatus
         }
     }
 }

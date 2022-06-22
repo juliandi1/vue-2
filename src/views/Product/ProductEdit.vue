@@ -7,10 +7,10 @@
             </strong>
         </div>
         <div class="col-md text-right">
-            <button v-on:click="createUser()" class="btn btn-icon btn-primary mr-1" id="btn-save">
+            <button v-on:click="editProduct()" class="btn btn-icon btn-primary mr-1" id="btn-save">
                 <i class="fas fa-fw fa-save"></i>
             </button>
-            <router-link :to="{name: 'user.index'}" class="btn btn-icon btn-primary" id="btn-list">
+            <router-link :to="{name: 'product.index'}" class="btn btn-icon btn-primary" id="btn-list">
                 <i class="fas fa-list fa-fw"></i>
             </router-link>
         </div>
@@ -22,20 +22,20 @@
                     <div class="row">
                         <div class="col-md">
                             <div class="form-group">
-                                <label>Username</label>
-                                <input type="text" class="form-control" v-model="user.username">
+                                <label>Name</label>
+                                <input type="text" class="form-control" v-model="product.name">
                             </div>
                         </div>
                         <div class="col-md">
                             <div class="form-group">
-                                <label>Email</label>
-                                <input type="text" class="form-control" v-model="user.email">
+                                <label>Price</label>
+                                <input type="text" class="form-control" v-model="product.price">
                             </div>
                         </div>
                         <div class="col-md">
                             <div class="form-group">
-                                <label>Password</label>
-                                <input type="password" class="form-control" v-model="user.password">
+                                <label>Description</label>
+                                <input type="text" class="form-control" v-model="product.description">
                             </div>
                         </div>
                     </div>
@@ -56,48 +56,67 @@ import { onMounted } from '@vue/runtime-core';
 /* My Package */
 import { showToolTip, showAlert } from './../../constant/function.js';
 import { API_URL } from './../../constant/variable.js';
+import { useRoute } from 'vue-router';
 
 export default {
     setup() {
         let alert = ref({});
-        const user = reactive({
-            username: null,
-            email: null,
-            password: null,
-            avatar: 'default.png'
+        const product = reactive({
+            name: null,
+            price: null,
+            description: null
         });
+        const router = useRoute();
 
         onMounted(() => {
             tooltipInitiation();
+            showAlert('loading', 'Data is loading, please wait...')
+            .then(res => {
+                alert.value = res;
+            })
+            .finally(() => {
+                getProduct();
+            });
         });
 
-        async function createUser() {
+        async function getProduct() {
+            let id = router.params.id;
+            await axios.get(`${API_URL}/products/show/${id}`)
+            .then(res => {
+                product.name = res.data.name;
+                product.price = res.data.price;
+                product.description = res.data.description;
+            })
+            .finally(() => {
+                showAlert('success', 'Data loaded successfully.')
+                .then(res => {
+                    alert.value = res;
+                })
+            });
+        }
+
+        async function editProduct() {
             showAlert('loading', 'Data is saving, please wait...')
             .then(res => {
                 alert.value = res;
             })
             .finally(() => {
-                storeUser();
+                updateProduct();
             });
         }
 
-        async function storeUser() {
+        async function updateProduct() {
+            let id = router.params.id;
             let data = {
-                username: user.username,
-                email: user.email,
-                password: user.password,
-                avatar: user.avatar
+                name: product.name,
+                price: product.price,
+                description: product.description
             }
-            await axios.postForm(`${API_URL}/users/create`, data)
+            await axios.postForm(`${API_URL}/products/update/${id}`, data)
             .then(() => {
-                showAlert('success', 'Data saved successfully')
+                showAlert('success', 'Data updated successfully')
                 .then(res => {
                     alert.value = res;
-                })
-                .finally(() => {
-                    user.username = null,
-                    user.email = null,
-                    user.password = null
                 });
             })
             .catch(err => {
@@ -111,14 +130,14 @@ export default {
         async function tooltipInitiation() {
             let btn_save = document.getElementById('btn-save');
             let btn_list = document.getElementById('btn-list');
-            showToolTip(btn_list, 'User List');
-            showToolTip(btn_save, 'Save User');
+            showToolTip(btn_list, 'Product List');
+            showToolTip(btn_save, 'Save Product');
         }
 
         return {
-            user,
+            product,
             alert,
-            createUser
+            editProduct
         }
     }
 }

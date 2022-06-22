@@ -7,10 +7,10 @@
             </strong>
         </div>
         <div class="col-md text-right">
-            <button v-on:click="createUser()" class="btn btn-icon btn-primary mr-1" id="btn-save">
+            <button v-on:click="createStatus()" class="btn btn-icon btn-primary mr-1" id="btn-save">
                 <i class="fas fa-fw fa-save"></i>
             </button>
-            <router-link :to="{name: 'user.index'}" class="btn btn-icon btn-primary" id="btn-list">
+            <router-link :to="{name: 'status.index'}" class="btn btn-icon btn-primary" id="btn-list">
                 <i class="fas fa-list fa-fw"></i>
             </router-link>
         </div>
@@ -22,20 +22,8 @@
                     <div class="row">
                         <div class="col-md">
                             <div class="form-group">
-                                <label>Username</label>
-                                <input type="text" class="form-control" v-model="user.username">
-                            </div>
-                        </div>
-                        <div class="col-md">
-                            <div class="form-group">
-                                <label>Email</label>
-                                <input type="text" class="form-control" v-model="user.email">
-                            </div>
-                        </div>
-                        <div class="col-md">
-                            <div class="form-group">
-                                <label>Password</label>
-                                <input type="password" class="form-control" v-model="user.password">
+                                <label>Name</label>
+                                <input type="text" class="form-control" v-model="status.name">
                             </div>
                         </div>
                     </div>
@@ -60,44 +48,36 @@ import { API_URL } from './../../constant/variable.js';
 export default {
     setup() {
         let alert = ref({});
-        const user = reactive({
-            username: null,
-            email: null,
-            password: null,
-            avatar: 'default.png'
+        const status = reactive({
+            name: null
         });
 
         onMounted(() => {
             tooltipInitiation();
         });
 
-        async function createUser() {
+        async function createStatus() {
             showAlert('loading', 'Data is saving, please wait...')
             .then(res => {
                 alert.value = res;
             })
             .finally(() => {
-                storeUser();
+                storeStatus();
             });
         }
 
-        async function storeUser() {
+        async function storeStatus() {
             let data = {
-                username: user.username,
-                email: user.email,
-                password: user.password,
-                avatar: user.avatar
+                name: status.name
             }
-            await axios.postForm(`${API_URL}/users/create`, data)
+            await axios.postForm(`${API_URL}/statuses/create`, data)
             .then(() => {
                 showAlert('success', 'Data saved successfully')
                 .then(res => {
                     alert.value = res;
                 })
                 .finally(() => {
-                    user.username = null,
-                    user.email = null,
-                    user.password = null
+                    status.name = null
                 });
             })
             .catch(err => {
@@ -111,14 +91,14 @@ export default {
         async function tooltipInitiation() {
             let btn_save = document.getElementById('btn-save');
             let btn_list = document.getElementById('btn-list');
-            showToolTip(btn_list, 'User List');
-            showToolTip(btn_save, 'Save User');
+            showToolTip(btn_list, 'Status List');
+            showToolTip(btn_save, 'Save Status');
         }
 
         return {
-            user,
+            status,
             alert,
-            createUser
+            createStatus
         }
     }
 }

@@ -7,10 +7,10 @@
             </strong>
         </div>
         <div class="col-md text-right">
-            <button v-on:click="createUser()" class="btn btn-icon btn-primary mr-1" id="btn-save">
+            <button v-on:click="createProduct()" class="btn btn-icon btn-primary mr-1" id="btn-save">
                 <i class="fas fa-fw fa-save"></i>
             </button>
-            <router-link :to="{name: 'user.index'}" class="btn btn-icon btn-primary" id="btn-list">
+            <router-link :to="{name: 'product.index'}" class="btn btn-icon btn-primary" id="btn-list">
                 <i class="fas fa-list fa-fw"></i>
             </router-link>
         </div>
@@ -22,20 +22,20 @@
                     <div class="row">
                         <div class="col-md">
                             <div class="form-group">
-                                <label>Username</label>
-                                <input type="text" class="form-control" v-model="user.username">
+                                <label>Name</label>
+                                <input type="text" class="form-control" v-model="product.name">
                             </div>
                         </div>
                         <div class="col-md">
                             <div class="form-group">
-                                <label>Email</label>
-                                <input type="text" class="form-control" v-model="user.email">
+                                <label>Price</label>
+                                <input type="text" class="form-control" v-model="product.price">
                             </div>
                         </div>
                         <div class="col-md">
                             <div class="form-group">
-                                <label>Password</label>
-                                <input type="password" class="form-control" v-model="user.password">
+                                <label>Description</label>
+                                <input type="text" class="form-control" v-model="product.description">
                             </div>
                         </div>
                     </div>
@@ -60,44 +60,42 @@ import { API_URL } from './../../constant/variable.js';
 export default {
     setup() {
         let alert = ref({});
-        const user = reactive({
-            username: null,
-            email: null,
-            password: null,
-            avatar: 'default.png'
+        const product = reactive({
+            name: null,
+            price: null,
+            description: null
         });
 
         onMounted(() => {
             tooltipInitiation();
         });
 
-        async function createUser() {
+        async function createProduct() {
             showAlert('loading', 'Data is saving, please wait...')
             .then(res => {
                 alert.value = res;
             })
             .finally(() => {
-                storeUser();
+                storeProduct();
             });
         }
 
-        async function storeUser() {
+        async function storeProduct() {
             let data = {
-                username: user.username,
-                email: user.email,
-                password: user.password,
-                avatar: user.avatar
+                name: product.name,
+                price: product.price,
+                description: product.description
             }
-            await axios.postForm(`${API_URL}/users/create`, data)
+            await axios.postForm(`${API_URL}/products/create`, data)
             .then(() => {
                 showAlert('success', 'Data saved successfully')
                 .then(res => {
                     alert.value = res;
                 })
                 .finally(() => {
-                    user.username = null,
-                    user.email = null,
-                    user.password = null
+                    product.name = null,
+                    product.price = null,
+                    product.description = null
                 });
             })
             .catch(err => {
@@ -111,14 +109,14 @@ export default {
         async function tooltipInitiation() {
             let btn_save = document.getElementById('btn-save');
             let btn_list = document.getElementById('btn-list');
-            showToolTip(btn_list, 'User List');
-            showToolTip(btn_save, 'Save User');
+            showToolTip(btn_list, 'Product List');
+            showToolTip(btn_save, 'Save Product');
         }
 
         return {
-            user,
+            product,
             alert,
-            createUser
+            createProduct
         }
     }
 }
